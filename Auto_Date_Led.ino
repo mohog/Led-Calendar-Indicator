@@ -1,6 +1,3 @@
-// Current code 2-8-2024
-// Fills with a leading green led
-// Wipes with black from 1 to current day after a delay
 //
 
 
@@ -16,7 +13,6 @@ Adafruit_NeoPixel leds = Adafruit_NeoPixel(PIXELS, LED_INPUT_DATA, NEO_GRB + NEO
 
 const char* ssid = "**********"; // network name
 const char* password = "**********"; // network password
-WiFi.setHostname("LED-Calendar"); // name your device for easy locating on the network
 const char* NTP_SERVER = "time.apple.com"; // "192.168.4.1";
 const char* TZ_INFO    =  "CST6CDT5,M3.2.0,M11.1.0"; //"CET-1CEST-2,M3.5.0/02:00:00,M10.5.0/03:00:00";  // enter your time zone (https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv)  (https://remotemonitoringsystems.ca/time-zone-abbreviations.php)
 tm timeinfo;
