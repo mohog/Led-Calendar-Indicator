@@ -1,78 +1,82 @@
-//
+/**************************************************************************
+ *                                                                       *
+     NeoPixel / WS2812b advent Calendar
+     created by Tim! / 54696d21
+
+	 rev 1 10.12.2017
+ *                                                                      *
+ **************************************************************************/
 
 
-#include <ESP8266WiFi.h>
-#include <time.h>
+// benötigte Bibilotheken
+#include <ESP8266WiFi.h>	//standard library
+#include <TimeLib.h>		//TimeLib.h by Paul Stoffregen
 #include <Wire.h>       //I2C
+#include <NTPClient.h>  //NTP Zeit
+#include <WiFiUdp.h>    //Network protocol for NTP
 #include <Adafruit_NeoPixel.h> //LED driver
+
 
 #define LED_INPUT_DATA D1	//Data pin for leds
 #define BRIGHTNESS 10 // brightness
 #define PIXELS 31		//Number of LEDs
+const long utcOffsetInSeconds = -21600;
+char daysOfTheWeek[7][12] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
+WiFiUDP ntpUDP;               //Set protocol for NTP to UDP
+NTPClient timeClient(ntpUDP, "192.168.4.1", utcOffsetInSeconds); //specify the NTP settings
+//NTPClient timeClient(ntpUDP, "time.apple.com", utcOffsetInSeconds); //specify the NTP settings
+
+const char *ssid     = "esptime";					//WLAN data to set the clock via NTP
+const char *password = "esp123456";
+//const char *ssid     = "Big";					//WLAN data to set the clock via NTP
+//const char *password = "patrick5";
+
 Adafruit_NeoPixel leds = Adafruit_NeoPixel(PIXELS, LED_INPUT_DATA, NEO_GRB + NEO_KHZ800); // led driver definitions
 
-const char* ssid = "**********"; // network name
-const char* password = "**********"; // network password
-const char* NTP_SERVER = "time.apple.com"; // "192.168.4.1";
-const char* TZ_INFO    =  "CST6CDT5,M3.2.0,M11.1.0"; //"CET-1CEST-2,M3.5.0/02:00:00,M10.5.0/03:00:00";  // enter your time zone (https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv)  (https://remotemonitoringsystems.ca/time-zone-abbreviations.php)
-tm timeinfo;
-time_t now;
-long unsigned lastNTPtime;
-unsigned long lastEntryTime;
-#define numday 31;
 
 
-void setup() {
-  Serial.begin(9600);
-  Serial.println();
-  Serial.println("\n\nNTP Sync Calendar\n");
-  Serial.print("Wifi connecting to ");
-  Serial.println( ssid );
-
+void setup () {
+  Serial.begin(9600); //Initialize serial interface for text output
+  Serial.println("\n\nAlive.");
+  WiFi.begin(ssid, password); //establishing the WLAN connection
   Wire.begin();   // I2C  initialize
+
+  delay(5000);
+
   pinMode(LED_INPUT_DATA, OUTPUT); //defining the data pin of the NeoPixel
   leds.begin();						//initialize leds
   leds.setBrightness(BRIGHTNESS); // Set the LEDs to the brightness value defined above
+  leds.setPixelColor(PIXELS, leds.Color(0,0,0)); //Black level
+  leds.show();
+  timeClient.update();  //Time management via NTP
+  setTime(timeClient.getEpochTime()); //NTP time passed for management in a human-readable format
+  delay(1000);
+  timeClient.update();  //Time management via NTP
+  setTime(timeClient.getEpochTime()); //NTP time passed for management in a human-readable format
+  Serial.println("\n\nAll Black. Starting with a clean slate.");
+  Serial.print(daysOfTheWeek[timeClient.getDay()]);
+  Serial.print(", ");
+  Serial.print(timeClient.getHours());
+  Serial.print(":");
+  Serial.print(timeClient.getMinutes());
+  Serial.print(":");
+  Serial.println(timeClient.getSeconds());
 
-  WiFi.begin(ssid, password);
 
-  int counter = 0;
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(200);
-    if (++counter > 100) ESP.restart();
-    Serial.print ( "." );
-  }
-  Serial.println("\n\nWiFi connected\n\n");
-  Serial.print("IP Address : ");
-  Serial.println(WiFi.localIP() );
-
-  configTime(0, 0, NTP_SERVER);
-  // See https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv for Timezone codes for your region
-  setenv("TZ", TZ_INFO, 1);
-  Serial.println("\nWaiting for Internet time");
-
-  if (getNTPtime(10)) {  // wait up to 10 sec to sync
-  } else {
-    Serial.println("Time not set");
-    ESP.restart();
-  }
-  showTime(timeinfo);
-  lastNTPtime = time(&now);
-  lastEntryTime = millis();
 }
 
-void loop() {
-  getNTPtime(10);
-  time_t now = time(nullptr);
-  struct tm* p_tm = localtime(&now);
-   
-  Serial.print("day of the month: ");
-  Serial.println(numday());
+void loop () {
+  timeClient.update();  //Time management via NTP
+  setTime(timeClient.getEpochTime()); //NTP time passed for management in a human-readable format
+  Serial.print("Current day of the month is ");
+  Serial.print(day());
+  Serial.println(". Filling LEDs");
 
-  for(int i=0;i<=(numday()-1);i++){	//Switch on LEDs pixel by pixel until the respective day is reached
-    Serial.print("loop count up: ");
-    Serial.println(i); //Output the number of the current LED
-    leds.setPixelColor(i, leds.Color(150,0,0)); // pure red.
+  for(int i=0;i<=(day()-1);i++){	//Switch on LEDs pixel by pixel until the respective day is reached
+    //Serial.print("loop turn on: ");
+    //Serial.println(i); //Output the number of the current LED
+    leds.setPixelColor(i, leds.Color(0,150,0)); // front fill green
+    leds.setPixelColor(i-1, leds.Color(150,0,0)); // back fill red
     leds.show(); //The status last written to the LEDs is displayed
     delay(300);	//Animation waiting time
 
@@ -81,82 +85,36 @@ void loop() {
   leds.show(); //Display when exiting the loop (should not be necessary)
 
 
-  Serial.print("Show current day of the month: ");
+  //Serial.print("Show current day of the month: ");
   //Serial.println(day()); //day in the month
-  Serial.println("Wait...");
+  Serial.println("Waiting...53.50 seconds");
+  delay(3500); //Duration in which all LEDs of the respective day are on
+  Serial.println("Waiting...50 seconds");
   delay(10000); //Duration in which all LEDs of the respective day are on
+  Serial.println("Waiting...40 seconds");
+  delay(10000); //Duration in which all LEDs of the respective day are on
+  Serial.println("Waiting...30 seconds");
+  delay(10000); //Duration in which all LEDs of the respective day are on
+  Serial.println("Waiting...20 seconds");
+  delay(10000); //Duration in which all LEDs of the respective day are on
+  Serial.println("Waiting...10 seconds");
+  delay(10000); //Duration in which all LEDs of the respective day are on
+  Serial.println("Wiping LEDs clean");
 
 
-  for(int l=(numday()-1); l>=0 ;l--){	//day-1, because the NeoPixels start at 0; LEDs go out one after the other, starting from the daily maximum to 0
-    Serial.print("count down loop: ");
-    Serial.println(l); //day in the month
-
-    leds.setPixelColor(l, leds.Color(0,0,0)); //Black level
+for(int i=0;i<=(day()-1);i++){	//Switch off LEDs pixel by pixel until the respective day is reached
+    //Serial.print("loop turn off: ");
+    //Serial.println(i); //Output the number of the current LED
+    leds.setPixelColor(i, leds.Color(0,0,0)); // Black
     leds.show(); //The status last written to the LEDs is displayed
-    delay(300);	//Duration of animation
+    delay(75);	//(300); //Animation waiting time
+
+
   }
-  leds.show();	//Display when exiting the loop (should not be necessary)
-
-  Serial.println("Wait...");
-  delay(1000); //Duration in which all LEDs are off
-
-
+  leds.show(); //Display when exiting the loop (should not be necessary)
   
 
+  Serial.println("Waiting...1 second");
+  delay(1000); //Duration in which all LEDs are off
+
 }
-
-bool getNTPtime(int sec) {
-
-  {
-    uint32_t start = millis();
-    do {
-      time(&now);
-      localtime_r(&now, &timeinfo);
-      //Serial.print(".");
-      delay(10);
-    } while (((millis() - start) <= (1000 * sec)) && (timeinfo.tm_year < (2016 - 1900)));
-    if (timeinfo.tm_year <= (2016 - 1900)) return false;  // the NTP call was not successful
-    //Serial.print("now ");  Serial.println(now);
-    char time_output[30];
-    strftime(time_output, 30, "%a  %m-%d-%y %T", localtime(&now));
-    //Serial.println(time_output);
-    //Serial.println();
-  }
-  return true;
-}
-
-
-
-/*
-void showTime(tm localTime) {
-  Serial.print(localTime.tm_mday);
-  Serial.print('/');
-  Serial.print(localTime.tm_mon + 1);
-  Serial.print('/');
-  Serial.print(localTime.tm_year - 100);
-  Serial.print('-');
-  Serial.print(localTime.tm_hour);
-  Serial.print(':');
-  Serial.print(localTime.tm_min);
-  Serial.print(':');
-  Serial.print(localTime.tm_sec);
-  Serial.print(" Day of Week ");
-  if (localTime.tm_wday == 0)   Serial.println(7);
-  else Serial.println(localTime.tm_wday);
-}
-*/
-
- // Shorter way of displaying the time
-  void showTime(tm localTime) {
-  Serial.printf(
-    "%04d-%02d-%02d %02d:%02d:%02d, day %d, %s time\n",
-    localTime.tm_year + 1900,
-    localTime.tm_mon + 1,
-    localTime.tm_mday,
-    localTime.tm_hour,
-    localTime.tm_min,
-    localTime.tm_sec,
-    (localTime.tm_wday > 0 ? localTime.tm_wday : 7 ),
-    (localTime.tm_isdst == 1 ? "summer" : "standard")
-  );
-  }
