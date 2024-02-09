@@ -1,9 +1,8 @@
 /**************************************************************************
  *                                                                       *
-     NeoPixel / WS2812b advent Calendar
-     created by Tim! / 54696d21
-
-	 rev 1 10.12.2017
+     Original code: NeoPixel / WS2812b advent Calendar  created by Tim! / 54696d21
+     Modified by Mohoganogan
+	 02.09.2024
  *                                                                      *
  **************************************************************************/
 
@@ -20,16 +19,13 @@
 #define LED_INPUT_DATA D1	//Data pin for leds
 #define BRIGHTNESS 10 // brightness
 #define PIXELS 31		//Number of LEDs
-const long utcOffsetInSeconds = -21600;
+const long utcOffsetInSeconds = -21600; //Central Time Zone -6 hours * 3600
 char daysOfTheWeek[7][12] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
 WiFiUDP ntpUDP;               //Set protocol for NTP to UDP
-NTPClient timeClient(ntpUDP, "192.168.4.1", utcOffsetInSeconds); //specify the NTP settings
-//NTPClient timeClient(ntpUDP, "time.apple.com", utcOffsetInSeconds); //specify the NTP settings
+NTPClient timeClient(ntpUDP, "time.apple.com", utcOffsetInSeconds); //specify the NTP settings this might lead to a slight error in the middle of the night while daylight wasting time is active
 
-const char *ssid     = "esptime";					//WLAN data to set the clock via NTP
-const char *password = "esp123456";
-//const char *ssid     = "Big";					//WLAN data to set the clock via NTP
-//const char *password = "patrick5";
+const char *ssid     = "*******";					//WLAN data to set the clock via NTP
+const char *password = "*******";
 
 Adafruit_NeoPixel leds = Adafruit_NeoPixel(PIXELS, LED_INPUT_DATA, NEO_GRB + NEO_KHZ800); // led driver definitions
 
@@ -115,6 +111,7 @@ for(int i=0;i<=(day()-1);i++){	//Switch off LEDs pixel by pixel until the respec
   
 
   Serial.println("Waiting...1 second");
+  strip.clear(); // Clear entire strip to prevent orphan pixels at month end rollover
   delay(1000); //Duration in which all LEDs are off
 
 }
