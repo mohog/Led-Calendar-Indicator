@@ -26,14 +26,17 @@ NTPClient timeClient(ntpUDP, "time.apple.com", utcOffsetInSeconds); //specify th
 
 const char *ssid     = "*******";					//WLAN data to set the clock via NTP
 const char *password = "*******";
+const char* MyHostName = "*******";
 
 Adafruit_NeoPixel leds = Adafruit_NeoPixel(PIXELS, LED_INPUT_DATA, NEO_GRB + NEO_KHZ800); // led driver definitions
 
 
 
 void setup () {
-  Serial.begin(9600); //Initialize serial interface for text output
+  Serial.begin(115200); //Initialize serial interface for text output
   Serial.println("\n\nAlive.");
+  WiFi.setHostname(MyHostName);
+  WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password); //establishing the WLAN connection
   Wire.begin();   // I2C  initialize
 
