@@ -2,29 +2,29 @@
  *                                                                       *
      Original code: NeoPixel / WS2812b advent Calendar  created by Tim! / 54696d21
      Modified by Mohoganogan
-	 02.09.2024
+   02.09.2024
  *                                                                      *
  **************************************************************************/
 
 
 // benötigte Bibilotheken
-#include <ESP8266WiFi.h>	//standard library
-#include <TimeLib.h>		//TimeLib.h by Paul Stoffregen
+#include <ESP8266WiFi.h>  //standard library
+#include <TimeLib.h>    //TimeLib.h by Paul Stoffregen
 #include <Wire.h>       //I2C
 #include <NTPClient.h>  //NTP Zeit
 #include <WiFiUdp.h>    //Network protocol for NTP
 #include <Adafruit_NeoPixel.h> //LED driver
 
 
-#define LED_INPUT_DATA D1	//Data pin for leds
+#define LED_INPUT_DATA D1 //Data pin for leds
 #define BRIGHTNESS 10 // brightness
-#define PIXELS 31		//Number of LEDs
+#define PIXELS 31   //Number of LEDs
 const long utcOffsetInSeconds = -21600; //Central Time Zone -6 hours * 3600
 char daysOfTheWeek[7][12] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
 WiFiUDP ntpUDP;               //Set protocol for NTP to UDP
 NTPClient timeClient(ntpUDP, "time.apple.com", utcOffsetInSeconds); //specify the NTP settings this might lead to a slight error in the middle of the night while daylight wasting time is active
 
-const char *ssid     = "*******";					//WLAN data to set the clock via NTP
+const char *ssid     = "*******";         //WLAN data to set the clock via NTP
 const char *password = "*******";
 const char* MyHostName = "*******";
 
@@ -43,7 +43,7 @@ void setup () {
   delay(5000);
 
   pinMode(LED_INPUT_DATA, OUTPUT); //defining the data pin of the NeoPixel
-  leds.begin();						//initialize leds
+  leds.begin();           //initialize leds
   leds.setBrightness(BRIGHTNESS); // Set the LEDs to the brightness value defined above
   leds.setPixelColor(PIXELS, leds.Color(0,0,0)); //Black level
   leds.show();
@@ -71,13 +71,13 @@ void loop () {
   Serial.print(day());
   Serial.println(". Filling LEDs");
 
-  for(int i=0;i<=(day()-1);i++){	//Switch on LEDs pixel by pixel until the respective day is reached
+  for(int i=0;i<=(day()-1);i++){  //Switch on LEDs pixel by pixel until the respective day is reached
     //Serial.print("loop turn on: ");
     //Serial.println(i); //Output the number of the current LED
     leds.setPixelColor(i, leds.Color(0,150,0)); // front fill green
     leds.setPixelColor(i-1, leds.Color(150,0,0)); // back fill red
     leds.show(); //The status last written to the LEDs is displayed
-    delay(300);	//Animation waiting time
+    delay(300); //Animation waiting time
 
 
   }
@@ -101,12 +101,12 @@ void loop () {
   Serial.println("Wiping LEDs clean");
 
 
-for(int i=0;i<=(day()-1);i++){	//Switch off LEDs pixel by pixel until the respective day is reached
+for(int i=0;i<=(day()-1);i++){  //Switch off LEDs pixel by pixel until the respective day is reached
     //Serial.print("loop turn off: ");
     //Serial.println(i); //Output the number of the current LED
     leds.setPixelColor(i, leds.Color(0,0,0)); // Black
     leds.show(); //The status last written to the LEDs is displayed
-    delay(75);	//(300); //Animation waiting time
+    delay(75);  //(300); //Animation waiting time
 
 
   }
@@ -114,7 +114,7 @@ for(int i=0;i<=(day()-1);i++){	//Switch off LEDs pixel by pixel until the respec
   
 
   Serial.println("Waiting...1 second");
-  strip.clear(); // Clear entire strip to prevent orphan pixels at month end rollover
+  leds.clear(); // Clear entire strip to prevent orphan pixels at month end rollover
   delay(1000); //Duration in which all LEDs are off
 
 }
